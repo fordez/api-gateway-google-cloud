@@ -1,158 +1,167 @@
 openapi: 3.0.0
 info:
-  title: Aibot24 Backend API Gateway
+  title: Aibot24 API
   version: 1.0.0
-  description: API for Aibot24 Bitrix24 Integration via API Gateway
-servers:
-  - url: /
-    description: La URL se determina dinámicamente según el entorno del Gateway
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-    MemberIdHeader:
-      type: apiKey
-      in: header
-      name: x-member-id
-      description: Bitrix24 Member ID (Required for Context Injection )
-
-  schemas:
-    Bot:
-      type: object
-      properties:
-        bot_id: { type: string }
-        bot_name: { type: string }
-        bot_code: { type: string }
-        email: { type: string }
-        avatar: { type: string, description: Base64 string }
-        ai_config_id: { type: string }
-        prompt_ids: { type: array, items: { type: string } }
-        is_active: { type: boolean }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
-    AIConfig:
-      type: object
-      properties:
-        config_id: { type: string }
-        config_name: { type: string }
-        provider: { type: string, enum: [openai, anthropic, gemini] }
-        model: { type: string }
-        temperature: { type: number }
-        max_tokens: { type: number }
-        is_default: { type: boolean }
-        created_at: { type: string, format: date-time }
-
-    Prompt:
-      type: object
-      properties:
-        prompt_id: { type: string }
-        name: { type: string }
-        content: { type: string }
-        trigger: { type: string }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
-
-security:
-  - BearerAuth: []
-    MemberIdHeader: []
 
 paths:
-  # --- WhatsApp Webhooks (Redirigen a tu Backend) ---
-  /webhook:
+  # --- BOTS ---
+  /api/bot:
     get:
-      summary: Verificación de Webhook para WhatsApp
-      operationId: verifyWhatsapp
-      security: []
+      operationId: listBots
       x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
+        address: ENDPOINT_URL/api/bot
       responses:
         "200":
           description: OK
     post:
-      summary: Recepción de mensajes de WhatsApp
-      operationId: receiveWhatsapp
-      security: []
+      operationId: createBot
       x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
+        address: ENDPOINT_URL/api/bot
+      responses:
+        "201":
+          description: Created
+
+  /api/bot/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateBot
+      x-google-backend:
+        address: ENDPOINT_URL/api/bot/{id}
+      responses:
+        "200":
+          description: OK
+    delete:
+      operationId: deleteBot
+      x-google-backend:
+        address: ENDPOINT_URL/api/bot/{id}
       responses:
         "200":
           description: OK
 
-  # --- Bitrix24 Events ---
+  # --- PROMPTS ---
+  /api/prompt:
+    get:
+      operationId: listPrompts
+      x-google-backend:
+        address: ENDPOINT_URL/api/prompt
+      responses:
+        "200":
+          description: OK
+    post:
+      operationId: createPrompt
+      x-google-backend:
+        address: ENDPOINT_URL/api/prompt
+      responses:
+        "201":
+          description: Created
+
+  /api/prompt/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updatePrompt
+      x-google-backend:
+        address: ENDPOINT_URL/api/prompt/{id}
+      responses:
+        "200":
+          description: OK
+    delete:
+      operationId: deletePrompt
+      x-google-backend:
+        address: ENDPOINT_URL/api/prompt/{id}
+      responses:
+        "200":
+          description: OK
+
+  # --- AI CONFIG ---
+  /api/ai-config:
+    get:
+      operationId: listAiConfigs
+      x-google-backend:
+        address: ENDPOINT_URL/api/ai-config
+      responses:
+        "200":
+          description: OK
+    post:
+      operationId: createAiConfig
+      x-google-backend:
+        address: ENDPOINT_URL/api/ai-config
+      responses:
+        "201":
+          description: Created
+
+  /api/ai-config/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: updateAiConfig
+      x-google-backend:
+        address: ENDPOINT_URL/api/ai-config/{id}
+      responses:
+        "200":
+          description: OK
+    delete:
+      operationId: deleteAiConfig
+      x-google-backend:
+        address: ENDPOINT_URL/api/ai-config/{id}
+      responses:
+        "200":
+          description: OK
+
+  # --- CONFIGURATION & CHANNELS ---
+  /api/configuration:
+    get:
+      operationId: getConfiguration
+      x-google-backend:
+        address: ENDPOINT_URL/api/configuration
+      responses:
+        "200":
+          description: OK
+    put:
+      operationId: updateConfiguration
+      x-google-backend:
+        address: ENDPOINT_URL/api/configuration
+      responses:
+        "200":
+          description: OK
+
+  /api/channels:
+    get:
+      operationId: listChannels
+      x-google-backend:
+        address: ENDPOINT_URL/api/channels
+      responses:
+        "200":
+          description: OK
+
+  # --- INSTALLATION ---
   /install:
     post:
-      summary: Install Application
-      security: []
+      operationId: installApp
       x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
+        address: ENDPOINT_URL/install
       responses:
-        200:
+        "200":
           description: OK
 
   /uninstall:
     post:
-      summary: Uninstall Application
-      security: []
+      operationId: uninstallApp
       x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
+        address: ENDPOINT_URL/uninstall
       responses:
-        200:
+        "200":
           description: OK
-
-  # --- API del Backend ---
-  /api/bot:
-    get:
-      summary: List Bots
-      tags: [Bot]
-      x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
-      responses:
-        200:
-          description: Success
-    post:
-      summary: Create Bot
-      tags: [Bot]
-      x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
-      responses:
-        201:
-          description: Created
-
-  /api/bot/{id}:
-    put:
-      tags: [Bot]
-      x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
-      responses:
-        200:
-          description: Updated
-    delete:
-      tags: [Bot]
-      x-google-backend:
-        address: ENDPOINT_URL
-        path_translation: APPEND_PATH_TO_ADDRESS
-        jwt_audience: ENDPOINT_URL
-      responses:
-        200:
-          description: Deleted
-
-  # NOTA: He resumido los demás paths para mantener el código limpio.
-  # Todos deben seguir el mismo patrón de x-google-backend con ENDPOINT_URL.
