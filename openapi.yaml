@@ -1,167 +1,154 @@
-openapi: 3.0.0
+swagger: "2.0"
 info:
   title: Aibot24 API
   version: 1.0.0
-
+host: aibot24-backend-prod-cwel54u6la-uc.a.run.app
+schemes:
+  - https
+produces:
+  - application/json
 paths:
-  # --- BOTS ---
   /api/bot:
     get:
       operationId: listBots
       x-google-backend:
-        address: ENDPOINT_URL/api/bot
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/bot
       responses:
-        "200":
+        200:
           description: OK
     post:
       operationId: createBot
       x-google-backend:
-        address: ENDPOINT_URL/api/bot
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/bot
       responses:
-        "201":
+        201:
           description: Created
-
   /api/bot/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        schema:
-          type: string
+        type: string
     put:
       operationId: updateBot
       x-google-backend:
-        address: ENDPOINT_URL/api/bot/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/bot/{id}
       responses:
-        "200":
+        200:
           description: OK
     delete:
       operationId: deleteBot
       x-google-backend:
-        address: ENDPOINT_URL/api/bot/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/bot/{id}
       responses:
-        "200":
+        200:
           description: OK
-
-  # --- PROMPTS ---
   /api/prompt:
     get:
       operationId: listPrompts
       x-google-backend:
-        address: ENDPOINT_URL/api/prompt
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/prompt
       responses:
-        "200":
+        200:
           description: OK
     post:
       operationId: createPrompt
       x-google-backend:
-        address: ENDPOINT_URL/api/prompt
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/prompt
       responses:
-        "201":
+        201:
           description: Created
-
   /api/prompt/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        schema:
-          type: string
+        type: string
     put:
       operationId: updatePrompt
       x-google-backend:
-        address: ENDPOINT_URL/api/prompt/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/prompt/{id}
       responses:
-        "200":
+        200:
           description: OK
     delete:
       operationId: deletePrompt
       x-google-backend:
-        address: ENDPOINT_URL/api/prompt/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/prompt/{id}
       responses:
-        "200":
+        200:
           description: OK
-
-  # --- AI CONFIG ---
   /api/ai-config:
     get:
       operationId: listAiConfigs
       x-google-backend:
-        address: ENDPOINT_URL/api/ai-config
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/ai-config
       responses:
-        "200":
+        200:
           description: OK
     post:
       operationId: createAiConfig
       x-google-backend:
-        address: ENDPOINT_URL/api/ai-config
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/ai-config
       responses:
-        "201":
+        201:
           description: Created
-
   /api/ai-config/{id}:
     parameters:
       - name: id
         in: path
         required: true
-        schema:
-          type: string
+        type: string
     put:
       operationId: updateAiConfig
       x-google-backend:
-        address: ENDPOINT_URL/api/ai-config/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/ai-config/{id}
       responses:
-        "200":
+        200:
           description: OK
     delete:
       operationId: deleteAiConfig
       x-google-backend:
-        address: ENDPOINT_URL/api/ai-config/{id}
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/ai-config/{id}
       responses:
-        "200":
+        200:
           description: OK
-
-  # --- CONFIGURATION & CHANNELS ---
   /api/configuration:
     get:
       operationId: getConfiguration
       x-google-backend:
-        address: ENDPOINT_URL/api/configuration
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/configuration
       responses:
-        "200":
+        200:
           description: OK
     put:
       operationId: updateConfiguration
       x-google-backend:
-        address: ENDPOINT_URL/api/configuration
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/configuration
       responses:
-        "200":
+        200:
           description: OK
-
   /api/channels:
     get:
       operationId: listChannels
       x-google-backend:
-        address: ENDPOINT_URL/api/channels
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/api/channels
       responses:
-        "200":
+        200:
           description: OK
-
-  # --- INSTALLATION ---
   /install:
     post:
       operationId: installApp
       x-google-backend:
-        address: ENDPOINT_URL/install
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/install
       responses:
-        "200":
+        200:
           description: OK
-
   /uninstall:
     post:
       operationId: uninstallApp
       x-google-backend:
-        address: ENDPOINT_URL/uninstall
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/uninstall
       responses:
-        "200":
+        200:
           description: OK
