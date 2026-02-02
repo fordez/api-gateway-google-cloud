@@ -5,18 +5,15 @@ on:
     branches:
       - main
       - develop
-    paths:
-      - "openapi.yaml"
-      - ".github/workflows/deploy.yml"
 
 env:
-  PROJECT_ID: "aibot24-485301" # Fijo aquí
+  PROJECT_ID: "aibot24-485301"
   REGION: us-central1
   SERVICE_NAME: aibot24-backend
   API_ID: aibot-api-gateway
 
 jobs:
-  deploy-gateway:
+  deploy-gateway-v1: # Nombre actualizado para forzar nuevo runner
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,8 +27,8 @@ jobs:
         id: auth
         uses: google-github-actions/auth@v2
         with:
+          token_format: "access_token"
           workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          # ID corregido manualmente para evitar el error de Gaia ID/Email
           service_account: serverless-deployer@aibot24-485301.iam.gserviceaccount.com
 
       - name: Set up Cloud SDK
@@ -54,19 +51,21 @@ jobs:
             echo "❌ Error: No se encontró el servicio $FULL_SERVICE_NAME"
             exit 1
           fi
-
           echo "RUN_URL=$RUN_URL" >> $GITHUB_ENV
 
       - name: Ensure API Resource Exists
         run: |
           gcloud api-gateway apis describe ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} || \
-          gcloud api-gateway apis create ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} --display-name="WhatsApp API Gateway"
+          gcloud api-gateway apis create ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} --display-name="Aibot24 API Gateway"
 
       - name: Prepare API Gateway Config
+        working-directory: api-gateway
         run: |
+          # Usamos | como separador en sed para evitar conflictos con las barras de la URL
           sed -i "s|ENDPOINT_URL|${{ env.RUN_URL }}|g" openapi.yaml
 
       - name: Deploy API Gateway
+        working-directory: api-gateway
         run: |
           CONFIG_ID="cfg-${{ github.run_id }}-${{ github.run_attempt }}"
 
@@ -74,7 +73,7 @@ jobs:
             --api=${{ env.API_ID }} \
             --openapi-spec=openapi.yaml \
             --project=${{ env.PROJECT_ID }} \
-            --backend-auth-service-account=serverless-deployer@aibot24-485301.iam.gserviceaccount.com
+            --backend-auth-service-account=gateway-sa@aibot24-485301.iam.gserviceaccount.com
 
           gcloud api-gateway gateways update aibot24-api-gateway \
             --api=${{ env.API_ID }} --api-config=$CONFIG_ID \
@@ -85,11 +84,11 @@ jobs:
             --location=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }}
 
-      - name: Final Summary and URL
+      - name: Final Summary
         run: |
           GATEWAY_URL=$(gcloud api-gateway gateways describe aibot24-api-gateway \
             --location=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }} \
             --format='value(defaultHostname)')
-          echo "### 🚀 Gateway Despliegue Exitoso" >> $GITHUB_STEP_SUMMARY
-          echo "URL Webhook: https://$GATEWAY_URL/webhook" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Gateway Listo" >> $GITHUB_STEP_SUMMARY
+          echo "URL: https://$GATEWAY_URL" >> $GITHUB_STEP_SUMMARY
