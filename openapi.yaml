@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Aibot24 Backend API
+  title: Aibot24 Backend API Gateway
   version: 1.0.0
   description: API for Aibot24 Bitrix24 Integration via API Gateway
 servers:
@@ -17,7 +17,7 @@ components:
       type: apiKey
       in: header
       name: x-member-id
-      description: Bitrix24 Member ID (Required for Context Injection)
+      description: Bitrix24 Member ID (Required for Context Injection )
 
   schemas:
     Bot:
