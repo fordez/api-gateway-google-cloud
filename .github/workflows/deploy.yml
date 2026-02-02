@@ -6,7 +6,8 @@ on:
       - main
       - develop
     paths:
-      - "api-gateway/**"
+      - "openapi.yaml"
+      - ".github/workflows/deploy.yml"
 
 env:
   PROJECT_ID: "aibot24-485301" # Fijo aquí
@@ -62,12 +63,10 @@ jobs:
           gcloud api-gateway apis create ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} --display-name="WhatsApp API Gateway"
 
       - name: Prepare API Gateway Config
-        working-directory: api-gateway
         run: |
           sed -i "s|ENDPOINT_URL|${{ env.RUN_URL }}|g" openapi.yaml
 
       - name: Deploy API Gateway
-        working-directory: api-gateway
         run: |
           CONFIG_ID="cfg-${{ github.run_id }}-${{ github.run_attempt }}"
 
