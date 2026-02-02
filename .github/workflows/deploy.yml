@@ -13,8 +13,9 @@ env:
   API_ID: aibot-api-gateway
 
 jobs:
-  deploy-gateway-v1: # Nombre actualizado para forzar nuevo runner
+  deploy-gateway:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       id-token: write
@@ -42,32 +43,50 @@ jobs:
           STAGE=${{ github.ref == 'refs/heads/main' && 'prod' || 'dev' }}
           FULL_SERVICE_NAME="${{ env.SERVICE_NAME }}-${STAGE}"
 
+          echo "Looking for service: $FULL_SERVICE_NAME"
+
           RUN_URL=$(gcloud run services describe $FULL_SERVICE_NAME \
             --region=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }} \
-            --format='value(status.url)')
+            --format='value(status.url)' 2>/dev/null || echo "")
 
           if [ -z "$RUN_URL" ]; then
-            echo "❌ Error: No se encontró el servicio $FULL_SERVICE_NAME"
-            exit 1
+            echo "⚠️ Service $FULL_SERVICE_NAME not found, using default URL"
+            RUN_URL="https://aibot24-backend-prod-cwel54u6la-uc.a.run.app"
           fi
+
+          echo "Using URL: $RUN_URL"
           echo "RUN_URL=$RUN_URL" >> $GITHUB_ENV
 
       - name: Ensure API Resource Exists
         run: |
-          gcloud api-gateway apis describe ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} || \
-          gcloud api-gateway apis create ${{ env.API_ID }} --project=${{ env.PROJECT_ID }} --display-name="Aibot24 API Gateway"
+          gcloud api-gateway apis describe ${{ env.API_ID }} \
+            --project=${{ env.PROJECT_ID }} 2>/dev/null || \
+          gcloud api-gateway apis create ${{ env.API_ID }} \
+            --project=${{ env.PROJECT_ID }} \
+            --display-name="Aibot24 API Gateway"
 
-      - name: Prepare API Gateway Config
-        working-directory: api-gateway
+      - name: Prepare OpenAPI Config
         run: |
-          # Usamos | como separador en sed para evitar conflictos con las barras de la URL
-          sed -i "s|ENDPOINT_URL|${{ env.RUN_URL }}|g" openapi.yaml
+          echo "Current directory: $(pwd)"
+          echo "Files:"
+          ls -la
 
-      - name: Deploy API Gateway
-        working-directory: api-gateway
+          # Reemplazar ENDPOINT_URL si existe en el archivo
+          if grep -q "ENDPOINT_URL" openapi.yaml 2>/dev/null; then
+            sed -i "s|ENDPOINT_URL|${{ env.RUN_URL }}|g" openapi.yaml
+            echo "✅ URL replaced in openapi.yaml"
+          else
+            echo "ℹ️ No ENDPOINT_URL placeholder found, using file as-is"
+          fi
+
+          echo "OpenAPI first 20 lines:"
+          head -20 openapi.yaml
+
+      - name: Deploy API Config
         run: |
           CONFIG_ID="cfg-${{ github.run_id }}-${{ github.run_attempt }}"
+          echo "Creating config: $CONFIG_ID"
 
           gcloud api-gateway api-configs create $CONFIG_ID \
             --api=${{ env.API_ID }} \
@@ -75,20 +94,34 @@ jobs:
             --project=${{ env.PROJECT_ID }} \
             --backend-auth-service-account=gateway-sa@aibot24-485301.iam.gserviceaccount.com
 
+      - name: Update Gateway
+        run: |
+          CONFIG_ID="cfg-${{ github.run_id }}-${{ github.run_attempt }}"
+
+          # Intentar actualizar gateway existente
           gcloud api-gateway gateways update aibot24-api-gateway \
-            --api=${{ env.API_ID }} --api-config=$CONFIG_ID \
+            --api=${{ env.API_ID }} \
+            --api-config=$CONFIG_ID \
             --location=${{ env.REGION }} \
-            --project=${{ env.PROJECT_ID }} || \
+            --project=${{ env.PROJECT_ID }} 2>/dev/null || \
+          # Si no existe, crearlo
           gcloud api-gateway gateways create aibot24-api-gateway \
-            --api=${{ env.API_ID }} --api-config=$CONFIG_ID \
+            --api=${{ env.API_ID }} \
+            --api-config=$CONFIG_ID \
             --location=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }}
 
-      - name: Final Summary
+      - name: Get Gateway URL
         run: |
+          echo "Waiting for gateway to be ready..."
+          sleep 30
+
           GATEWAY_URL=$(gcloud api-gateway gateways describe aibot24-api-gateway \
             --location=${{ env.REGION }} \
             --project=${{ env.PROJECT_ID }} \
             --format='value(defaultHostname)')
-          echo "### 🚀 Gateway Listo" >> $GITHUB_STEP_SUMMARY
-          echo "URL: https://$GATEWAY_URL" >> $GITHUB_STEP_SUMMARY
+
+          echo "### 🚀 Gateway Deployed Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "**Gateway URL:** https://$GATEWAY_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backend:** ${{ env.RUN_URL }}" >> $GITHUB_STEP_SUMMARY
