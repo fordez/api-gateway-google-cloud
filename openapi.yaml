@@ -1,0 +1,511 @@
+openapi: 3.0.0
+info:
+  title: Aibot24 Backend API
+  version: 1.0.0
+  description: API for Aibot24 Bitrix24 Integration
+servers:
+  - url: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app
+    description: Production Server
+  - url: https://aibot24-backend-dev-485301.us-central1.run.app
+    description: Development Server
+  - url: http://localhost:8080
+    description: Local Development
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    MemberIdHeader:
+      type: apiKey
+      in: header
+      name: x-member-id
+      description: Bitrix24 Member ID (Required for Context Injection)
+
+  schemas:
+    Bot:
+      type: object
+      properties:
+        bot_id:
+          type: string
+        bot_name:
+          type: string
+        bot_code:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+          description: Base64 string
+        ai_config_id:
+          type: string
+        prompt_ids:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    
+    AIConfig:
+      type: object
+      properties:
+        config_id:
+          type: string
+        config_name:
+          type: string
+        provider:
+          type: string
+          enum: [openai, anthropic, gemini]
+        model:
+          type: string
+        temperature:
+          type: number
+        max_tokens:
+          type: number
+        is_default:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    Prompt:
+      type: object
+      properties:
+        prompt_id:
+          type: string
+        name:
+          type: string
+        content:
+          type: string
+        trigger:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Configuration:
+      type: object
+      properties:
+        member_id:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark]
+        language:
+          type: string
+        company_logo:
+          type: string
+          description: Base64 string
+        created_at:
+          type: string
+          format: date-time
+
+security:
+  - BearerAuth: []
+    MemberIdHeader: []
+
+paths:
+  /webhook:
+    get:
+      summary: Verificación de Webhook para WhatsApp
+      operationId: verifyWhatsapp
+      security: []
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Recepción de mensajes de WhatsApp
+      operationId: receiveWhatsapp
+      security: []
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        "200":
+          description: OK
+
+  /install:
+    post:
+      summary: Install Application
+      description: Handles the installation event from Bitrix24.
+      security: []
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                auth_id: { type: string }
+                member_id: { type: string }
+                refresh_id: { type: string }
+                auth_expires: { type: string }
+                DOMAIN: { type: string }
+      responses:
+        200:
+          description: Installation successful (HTML response)
+        500:
+          description: Installation failed
+
+  /uninstall:
+    post:
+      summary: Uninstall Application
+      description: Handles the uninstallation event from Bitrix24.
+      security: []
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Uninstallation processed
+
+  /api/bot:
+    get:
+      summary: List Bots
+      tags: [Bot]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: List of bots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bot'
+    post:
+      summary: Create Bot
+      tags: [Bot]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bot_name, ai_config_id]
+              properties:
+                bot_name: { type: string }
+                ai_config_id: { type: string }
+                photo_base64: { type: string }
+                prompt_ids: 
+                  type: array
+                  items: { type: string }
+                email: { type: string }
+                color: { type: string }
+      responses:
+        201:
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  bot: { $ref: '#/components/schemas/Bot' }
+                  webhook_url: { type: string }
+
+  /api/bot/{id}:
+    put:
+      summary: Update Bot
+      tags: [Bot]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bot_name: { type: string }
+                ai_config_id: { type: string }
+                is_active: { type: boolean }
+                email: { type: string }
+                photo_base64: { type: string }
+                prompt_ids: 
+                  type: array
+                  items: { type: string }
+                color: { type: string }
+      responses:
+        200:
+          description: Bot updated
+    delete:
+      summary: Delete Bot
+      tags: [Bot]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Bot deleted
+
+  /api/ai-config:
+    get:
+      summary: List AI Configs
+      tags: [AI Config]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: List of AI configs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AIConfig'
+    post:
+      summary: Create AI Config
+      tags: [AI Config]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [config_name, provider, model]
+              properties:
+                config_name: { type: string }
+                provider: { type: string, enum: [openai, anthropic, gemini] }
+                model: { type: string }
+                api_key: { type: string }
+                temperature: { type: number }
+                max_tokens: { type: number }
+      responses:
+        201:
+          description: AI Config created
+
+  /api/ai-config/{id}:
+    put:
+      summary: Update AI Config
+      tags: [AI Config]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config_name: { type: string }
+                provider: { type: string }
+                model: { type: string }
+                api_key: { type: string }
+                temperature: { type: number }
+                max_tokens: { type: number }
+      responses:
+        200:
+          description: Updated
+    delete:
+      summary: Delete AI Config
+      tags: [AI Config]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Deleted
+
+  /api/prompt:
+    get:
+      summary: List Prompts
+      tags: [Prompt]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: List of prompts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Prompt'
+    post:
+      summary: Create Prompt
+      tags: [Prompt]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, content]
+              properties:
+                name: { type: string }
+                content: { type: string }
+                trigger: { type: string }
+      responses:
+        201:
+          description: Prompt created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Prompt'
+
+  /api/prompt/{id}:
+    put:
+      summary: Update Prompt
+      tags: [Prompt]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                content: { type: string }
+                trigger: { type: string }
+      responses:
+        200:
+          description: Prompt updated
+    delete:
+      summary: Delete Prompt
+      tags: [Prompt]
+      parameters:
+        - in: path
+          name: id
+          schema: { type: string }
+          required: true
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Prompt deleted
+
+  /api/configuration:
+    get:
+      summary: Get Configuration
+      tags: [Configuration]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Tenant configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+    put:
+      summary: Update Configuration
+      tags: [Configuration]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme: { type: string, enum: [light, dark] }
+                language: { type: string }
+                company_logo: { type: string }
+      responses:
+        200:
+          description: Configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Configuration'
+
+  /api/installation:
+    get:
+      summary: Get Installation Info
+      tags: [Installation]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: Installation details
+
+  /api/channels:
+    get:
+      summary: List Channels
+      tags: [Channels]
+      x-google-backend:
+        address: ENDPOINT_URL
+        path_translation: APPEND_PATH_TO_ADDRESS
+        jwt_audience: ENDPOINT_URL
+      responses:
+        200:
+          description: List of channels
