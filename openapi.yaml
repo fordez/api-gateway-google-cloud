@@ -136,7 +136,7 @@ paths:
         200:
           description: OK
   /install:
-    get:
+    head:
       operationId: verifyInstall
       x-google-backend:
         address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/install
