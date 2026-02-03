@@ -137,6 +137,13 @@ paths:
         200:
           description: OK
   /install:
+    get:
+      summary: Verify Installation URL (Ping)
+      security: []
+      x-google-backend:
+        address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/install
+      responses:
+        200: { description: OK }
     post:
       operationId: installApp
       x-google-backend:
