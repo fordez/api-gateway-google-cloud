@@ -2,7 +2,6 @@ swagger: "2.0"
 info:
   title: Aibot24 API
   version: 1.0.0
-host: aibot24-backend-prod-cwel54u6la-uc.a.run.app
 schemes:
   - https
 produces:
@@ -138,12 +137,12 @@ paths:
           description: OK
   /install:
     get:
-      summary: Verify Installation URL (Ping)
-      security: []
+      operationId: verifyInstall
       x-google-backend:
         address: https://aibot24-backend-prod-cwel54u6la-uc.a.run.app/install
       responses:
-        200: { description: OK }
+        200:
+          description: OK
     post:
       operationId: installApp
       x-google-backend:
